@@ -20,6 +20,7 @@
 
 static int test_hugepage = 0;
 static int random_list = 0;
+static int full_address_space = 0;
 
 static void die(const char *fmt, ...)
 {
@@ -200,6 +201,11 @@ static void *create_map(void *map, unsigned long size, unsigned long stride)
 	if (test_hugepage)
 		mapsize += 2*HUGEPAGE;
 
+	if (!map && full_address_space) {
+		/* Use full address space */
+		map = (void *)-1;
+	}
+
 	map = mmap(map, mapsize, PROT_READ | PROT_WRITE, flags, -1, 0);
 	if (map == MAP_FAILED)
 		die("mmap failed");
@@ -256,6 +262,9 @@ int main(int argc, char **argv)
 			case 'r':
 				random_list = 1;
 				continue;
+			case 'f':
+				full_address_space = 1;
+				continue;
 			default:
 				die("Unknown flag '%s'", arg);
 			}
@@ -267,7 +276,7 @@ int main(int argc, char **argv)
 	size = get_num(argv[1]);
 	stride = get_num(argv[2]);
 	if (stride < 4 || size < stride)
-		die("bad arguments: test-tlb [-H] <size> <stride>");
+		die("bad arguments: test-tlb [-H] [-r] [-f] <size> <stride>");
 
 	map = NULL;
 	cycles = 1e10;
