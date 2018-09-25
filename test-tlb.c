@@ -128,6 +128,9 @@ static unsigned long get_num(const char *str)
 		case 'G':
 			val <<= 30;
 			break;
+		case 'T':
+			val <<= 40;
+			break;
 		default:
 			return 0;
 		}
