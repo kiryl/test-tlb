@@ -56,12 +56,12 @@ unsigned long usec_diff(struct timeval *a, struct timeval *b)
  */
 static unsigned long warmup(void *map)
 {
-	unsigned int offset = 0;
+	unsigned long offset = 0;
 	struct timeval start, end;
 
 	gettimeofday(&start, NULL);
 	do {
-		offset = *(volatile unsigned int *)(map + offset);
+		offset = *(volatile unsigned long *)(map + offset);
 	} while (offset);
 	gettimeofday(&end, NULL);
 	return usec_diff(&start, &end);
@@ -95,13 +95,13 @@ static double do_test(void *map)
 	gettimeofday(&start, NULL);
 	do {
 		count++;
-		offset = *(unsigned int *)(map + offset);
+		offset = *(unsigned long *)(map + offset);
 	} while (!stop);
 	gettimeofday(&end, NULL);
 	usec = usec_diff(&start, &end);
 
 	// Make sure the compiler doesn't compile away offset
-	*(volatile unsigned int *)(map + offset);
+	*(volatile unsigned long *)(map + offset);
 
 	// return cycle time in ns
 	return 1000 * (double) usec / count;
@@ -138,10 +138,10 @@ static unsigned long get_num(const char *str)
 static void randomize_map(void *map, unsigned long size, unsigned long stride)
 {
 	unsigned long off;
-	unsigned int *lastpos, *rnd;
+	unsigned long *lastpos, *rnd;
 	int n;
 
-	rnd = calloc(size / stride + 1, sizeof(unsigned int));
+	rnd = calloc(size / stride + 1, sizeof(unsigned long));
 	if (!rnd)
 		die("out of memory");
 
@@ -151,8 +151,8 @@ static void randomize_map(void *map, unsigned long size, unsigned long stride)
 
 	/* Randomize the offsets */
 	for (n = 0, off = 0; off < size; n++, off += stride) {
-		unsigned int m = (unsigned long)random() % (size / stride);
-		unsigned int tmp = rnd[n];
+		unsigned long m = (unsigned long)random() % (size / stride);
+		unsigned long tmp = rnd[n];
 		rnd[n] = rnd[m];
 		rnd[m] = tmp;
 	}
@@ -175,7 +175,7 @@ static void *create_map(void *map, unsigned long size, unsigned long stride)
 {
 	unsigned int flags = MAP_PRIVATE | MAP_ANONYMOUS;
 	unsigned long off, mapsize;
-	unsigned int *lastpos;
+	unsigned long *lastpos;
 
 	/*
 	 * If we're using hugepages, we will just re-use any existing
